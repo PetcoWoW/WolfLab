@@ -10,15 +10,16 @@ Click through the new screens in game before they ship in Wolf.
 
 ## What's in it
 
-- **Today:** what you own is worth, Your top 3, what's going up and down today, Coming up (your next sell window,
-  the raids, your watchlist's biggest move) and Last session with Start a session.
+- **Today:** what you own is worth; Your top 3; under it on the same three columns Movers (up / down, scrolls),
+  Coming up and In your bags.
 - **Sample session panel:** fold it to one line (gold and gold an hour) or unfold it for the items.
 - **Minimap button** (a placeholder wolf): click opens the Lab, right-click starts or stops the sample session.
-- **Market:** the list on the left; an item's page with the verdict first, the chart (7D / 30D / 90D), and five
-  folds that show their answer while closed. Watch, Wowhead, Share.
+- **Market:** the list on the left; an item's page with the verdict first, the chart (7D / 30D / 90D), and beside it
+  sections that fit the item (a material: Best crafts, Where to farm; a crafted item: Craft it). Watch, Wowhead, Share.
 - **When it sells:** when to sell, when to buy, the busiest day, one hour-by-hour strip; the charts on request.
 - **Make gold:** Flip it, Craft it, Farm it, Raid prep.
-- **You:** Holdings (each with its verdict), Sessions, Characters.
+- **You:** Holdings with a donut of where your gold sits (where it is / how liquid: hover, click to filter), each
+  holding with its verdict; Sessions; Characters.
 - **Settings:** look, text size, meme words.
 
 Six verdicts everywhere: BUY, SELL, HOLD, WAIT, CRAFT, FARM.

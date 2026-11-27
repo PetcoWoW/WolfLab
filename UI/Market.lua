@@ -119,16 +119,47 @@ function P.FillList()
 end
 
 ---------------------------------------------------------------------------
--- The folds: closed, each shows its answer in one line; open, a few more lines (one open at a time)
+-- The sections beside the chart: each shows its answer and a few lines more, and they share the column's height
+-- (no empty space under the last). What shows depends on the item: a material has Best crafts (what it's made
+-- into) and Where to farm; a crafted item has Craft it (its materials, what it costs, what it brings) instead.
 ---------------------------------------------------------------------------
-local FOLDS = { "when", "market", "history", "crafts", "farm" }
-local FOLD_TITLE = { when = L["When it sells"], market = L["Market"], history = L["Price history"], crafts = L["Best crafts"], farm = L["Where to farm"] }
+local TITLE = { when = L["When it sells"], market = L["Market"], history = L["Price history"], crafts = L["Best crafts"],
+    farm = L["Where to farm"], make = L["Craft it"] }
 
-local function FoldTexts(key, id)
+local function Sections(id)
+    local it = D.items[id]
+    local list = { "when", "market", "history" }
+    if it.made then
+        list[#list + 1] = "make"
+    else
+        if D.crafts[id] then list[#list + 1] = "crafts" end
+        if D.spots[id] then list[#list + 1] = "farm" end
+    end
+    return list
+end
+
+local function Name(x) return type(x) == "number" and FT.ItemText(x) or FT.C("text", x) end
+
+-- what a crafted item costs to make: the sum, and a line per material
+local function Cost(id)
+    local m = D.made[id]
+    if not m then return nil end
+    local sum, lines = 0, {}
+    for _, mat in ipairs(m.mats) do
+        local each = type(mat[1]) == "number" and D.items[mat[1]].price or mat[3] or 0
+        sum = sum + each * mat[2]
+        lines[#lines + 1] = mat[2] .. " " .. Name(mat[1]) .. FT.C("dim", "  " .. FT.Money(each * mat[2], "short"))
+    end
+    return sum, lines, m.note
+end
+
+-- one section's answer, its extra lines, and a button (label, what it does)
+local function Texts(key, id)
     local it = D.items[id]
     if key == "when" then
         return string.format(L["Sell %s · buy %s"], FT.Hour(it.sell[1]) .. "–" .. FT.Hour(it.sell[2]), FT.Hour(it.buy[1]) .. "–" .. FT.Hour(it.buy[2])),
-            { string.format(L["Busiest day: %s"], it.day), L["Times on your clock."] }, L["Hour by hour"]
+            { string.format(L["Busiest day: %s"], it.day), L["Times on your clock."] },
+            { L["Hour by hour"], function() if FT.WhenSells then FT.WhenSells.Open(id) end end }
     elseif key == "market" then
         return string.format(L["%s · sells ~%s a day"], L[it.market], FT.Num(it.perDay)),
             { string.format(L["About %d days to sell everything listed"], math.max(1, math.floor(140 / math.max(1, it.perDay) + 0.5))),
@@ -137,86 +168,86 @@ local function FoldTexts(key, id)
         return string.format(L["7d %s · 30d %s"], FT.Pct(it.ch7), FT.Pct(it.ch30)),
             { string.format(L["30-day high %s, low %s"], FT.Money(math.floor(it.price * 1.07), "short"), FT.Money(math.floor(it.price * 0.86), "short")) }
     elseif key == "crafts" then
-        return it.craft, {}
-    else
-        return it.farm, {}
+        local out = {}
+        for _, c in ipairs(D.crafts[id]) do
+            local g = c[2] or 0
+            local gold = g > 0 and FT.C("up", "+" .. FT.Money(g, "short")) or (g < 0 and FT.C("down", FT.Money(g, "short")) or FT.C("dim", L["no gain"]))
+            out[#out + 1] = Name(c[1]) .. ": " .. gold .. FT.C("dim", " " .. L["a use"])
+        end
+        local first = table.remove(out, 1)
+        return first, out
+    elseif key == "farm" then
+        local out = {}
+        for _, sp in ipairs(D.spots[id]) do out[#out + 1] = FT.C("text", sp[1]) .. FT.C("dim", "  " .. sp[2]) end
+        local first = table.remove(out, 1)
+        return first, out
+    else -- make
+        local cost, lines, note = Cost(id)
+        local after = math.floor(it.price * 0.95)
+        local profit = after - cost
+        local sum = string.format(L["Costs ~%s, sells %s"], FT.Money(cost, "short"), FT.Money(it.price, "short")) .. "  " ..
+            (profit > 0 and FT.C("up", "+" .. FT.Money(profit, "short")) or FT.C("down", FT.Money(profit, "short")))
+        local more = {}
+        for _, l in ipairs(lines) do more[#more + 1] = l end
+        if note then more[#more + 1] = FT.C("dim", note) end
+        return sum, more
     end
 end
 
 local function BuildFolds(parent)
     local box = UI.Panel(parent, "bg1", "line")
-    box.folds = {}
-    for i, key in ipairs(FOLDS) do
-        local f = CreateFrame("Button", nil, box)
-        f.key = key
-        f.hover = UI.Tex(f, "BACKGROUND", "hl", 0.5)
-        f.hover:SetAllPoints()
-        f.hover:Hide()
+    box.secs = {}
+    for i = 1, 5 do
+        local f = CreateFrame("Frame", nil, box)
         f.title = UI.Text(f, 13, "muted")
-        f.title:SetPoint("TOPLEFT", 12, -9)
-        f.title:SetText(FOLD_TITLE[key])
-        f.sign = UI.Text(f, 15, "muted", "RIGHT")
-        f.sign:SetPoint("TOPRIGHT", -12, -7)
+        f.title:SetPoint("TOPLEFT", 12, -10)
         f.sum = UI.Text(f, 14, "text")
-        f.sum:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -4)
+        f.sum:SetPoint("TOPLEFT", f.title, "BOTTOMLEFT", 0, -5)
         f.sum:SetPoint("RIGHT", -12, 0)
-        f.sum:SetJustifyV("TOP")
-        if f.sum.SetWordWrap then f.sum:SetWordWrap(true) end
         f.more = {}
-        for k = 1, 2 do
-            local t = UI.Text(f, 13, "muted")
-            t:SetPoint("TOPLEFT", f.sum, "BOTTOMLEFT", 0, -6 - (k - 1) * UI.RowH(18))
+        for k = 1, 4 do
+            local t = UI.Text(f, 12, "muted")
+            t:SetPoint("TOPLEFT", f.sum, "BOTTOMLEFT", 0, -5 - (k - 1) * UI.RowH(17))
             t:SetPoint("RIGHT", -12, 0)
             f.more[k] = t
         end
-        f.btn = UI.Button(f, "", nil, 22, "default", function() if FT.WhenSells then FT.WhenSells.Open(state.id) end end)
-        if i < #FOLDS then
-            f.line = UI.HLine(f, "line", 0.5)
-            f.line:SetPoint("BOTTOMLEFT", 8, 0)
-            f.line:SetPoint("BOTTOMRIGHT", -8, 0)
-        end
-        f:SetScript("OnEnter", function(self) self.hover:Show() end)
-        f:SetScript("OnLeave", function(self) self.hover:Hide() end)
-        f:SetScript("OnClick", function(self)
-            box.open = (box.open ~= self.key) and self.key or nil
-            box:Lay()
-        end)
-        box.folds[i] = f
+        f.btn = UI.Button(f, "", nil, 20, "default", function(self) if self.fn then self.fn() end end)
+        f.btn:SetPoint("TOPRIGHT", -8, -6)
+        f.line = UI.HLine(f, "line", 0.5)
+        f.line:SetPoint("BOTTOMLEFT", 8, 0)
+        f.line:SetPoint("BOTTOMRIGHT", -8, 0)
+        box.secs[i] = f
     end
-    box.open = "when"
     function box:Lay()
-        local y = -4
-        for _, f in ipairs(self.folds) do
-            local sum, more, btn = FoldTexts(f.key, state.id)
-            f.sum:SetText(sum)
-            -- a long answer wraps to a second line
-            local room = (self:GetWidth() or 300) - 32
-            local two = (f.sum:GetStringWidth() or 0) > room
-            local sumH = UI.RowH(two and 34 or 17)
-            f.sum:SetHeight(sumH)
-            local open = self.open == f.key
-            f.sign:SetText(open and "–" or "+")
-            local h = UI.RowH(31) + sumH
-            for k, t in ipairs(f.more) do
-                local line = open and more[k] or nil
-                t:SetShown(line ~= nil)
-                if line then t:SetText(line); h = h + UI.RowH(18) end
+        local keys = Sections(state.id)
+        local n = #keys
+        local H = (self:GetHeight() or 400) - 8
+        local each = math.floor(H / math.max(1, n))
+        for i, f in ipairs(self.secs) do
+            local key = keys[i]
+            f:SetShown(key ~= nil)
+            if key then
+                local sum, more, btn = Texts(key, state.id)
+                f.title:SetText(TITLE[key])
+                UI.FitSize(f.sum, sum or "", 14, 3)
+                -- as many extra lines as its share of the height holds
+                local room = math.max(0, math.floor((each - UI.RowH(48)) / UI.RowH(17)))
+                for k, t in ipairs(f.more) do
+                    local line = (k <= room) and more and more[k] or nil
+                    t:SetShown(line ~= nil)
+                    if line then UI.FitSize(t, line, 12, 2) end
+                end
+                f.btn:SetShown(btn ~= nil)
+                if btn then f.btn:SetLabel(btn[1]); f.btn.fn = btn[2]; f.btn:FitText(20) end
+                f.line:SetShown(i < n)
+                f:ClearAllPoints()
+                f:SetPoint("TOPLEFT", 4, -4 - (i - 1) * each)
+                f:SetPoint("RIGHT", -4, 0)
+                f:SetHeight(each)
             end
-            f.btn:SetShown(open and btn ~= nil)
-            if open and btn then
-                f.btn:SetLabel(btn); f.btn:FitText(24)
-                f.btn:ClearAllPoints()
-                f.btn:SetPoint("TOPLEFT", f.sum, "BOTTOMLEFT", 0, -(h - UI.RowH(31) - sumH) - 10)
-                h = h + 34
-            end
-            if open then h = h + 4 end
-            f:ClearAllPoints()
-            f:SetPoint("TOPLEFT", 4, y)
-            f:SetPoint("RIGHT", -4, 0)
-            f:SetHeight(h)
-            y = y - h
         end
     end
+    box:HookScript("OnSizeChanged", function(self) self:Lay() end)
     return box
 end
 

@@ -79,10 +79,15 @@ end
 -- every item's page, every fold open in turn, every range
 for _, id in ipairs(FT.Data.order) do
   step("item " .. id, function() FT.Lab.OpenItem(id) end)
-  for _, f in ipairs(FT.Pages.market.item.folds.folds) do
-    step("fold " .. f.key, function() f:GetScript("OnClick")(f) end)
-    check("item " .. id .. " fold " .. f.key, WolfLabFrame)
-  end
+  mock.run(0.2)
+  check("item " .. id, WolfLabFrame)
+  -- a crafted item: Craft it, never Best crafts or Where to farm; a material: never Craft it
+  local titles = {}
+  for _, f in ipairs(FT.Pages.market.item.folds.secs) do if f:IsShown() then titles[#titles + 1] = f.title:GetText() end end
+  local t = table.concat(titles, ",")
+  if FT.Data.items[id].made then
+    if t:find("Best crafts") or t:find("Where to farm") or not t:find("Craft it") then mock.err("sections " .. id, "crafted item shows: " .. t) end
+  elseif t:find("Craft it") then mock.err("sections " .. id, "material shows: " .. t) end
 end
 for _, r in ipairs({ "7D", "30D", "90D" }) do
   step("range " .. r, function()
@@ -112,7 +117,27 @@ for _, key in ipairs({ "today", "market", "make", "you" }) do
   check("meme " .. key, WolfLabFrame)
 end
 -- the sample session: open, folded, unfolded, from Today's button and the minimap's right-click
-step("session start", function() FT.Show("today"); FT.Pages.today.last.start.onClick() end)
+-- Today's movers both ways
+step("movers down", function() FT.Show("today"); FT.Pages.today.movers.seg.buttons[2].onClick() end)
+check("today movers down", WolfLabFrame)
+step("movers up", function() FT.Pages.today.movers.seg.buttons[1].onClick() end)
+-- You: the donut, both views, every slice picked and picked again
+for _, v in ipairs({ "where", "liquid" }) do
+  step("donut view " .. v, function()
+    FT.Show("you")
+    for _, b in ipairs(FT.Pages.you.donutBox.seg.buttons) do if b.value == v then b.onClick() end end
+  end)
+  check("donut " .. v, WolfLabFrame)
+  for _, sl in ipairs(FT.Pages.you.donut.slices) do
+    step("pick " .. sl.key, function() FT.Pages.you.donut:Pick(sl.key) end)
+    check("donut " .. v .. " " .. sl.key, WolfLabFrame)
+    if #FT.Pages.you.holdings.list.items == 0 then mock.err("donut", "slice " .. sl.key .. " shows no rows") end
+    step("unpick " .. sl.key, function() FT.Pages.you.donut:Pick(sl.key) end)
+  end
+  step("legend click", function() local r = FT.Pages.you.donutBox.legend[2]; r:GetScript("OnClick")(r) end)
+  step("donut hover", function() local dn = FT.Pages.you.donut; dn.hover = dn.slices[1].key; dn:Draw() end)
+end
+step("session start", function() FT.Session.Start() end)
 mock.run(65)
 check("session", WolfLabSession)
 step("session fold", function() WolfLabSession.fold.onClick() end)

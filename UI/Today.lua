@@ -1,5 +1,5 @@
--- Wolf Lab: Today, the first page. Four things only: what you own is worth, Your top 3, and what's going up and
--- down today. The old overview's stat cards, the listed-value chart and Market Makers are gone.
+-- Wolf Lab: Today, the first page. What you own is worth, then two rows on the same three columns: Your top 3, and
+-- under them Movers (up or down today, scrolls), Coming up, and In your bags.
 local ADDON, FT = ...
 local UI, L = FT.UI, FT.L
 local D, Lab = FT.Data, FT.Lab
@@ -8,7 +8,11 @@ local P = {}
 FT.Pages.today = P
 
 local PAD, GAP = 14, 12
+local RAIDS = time({ year = 2026, month = 12, day = 9, hour = 12 })
 
+---------------------------------------------------------------------------
+-- Your top 3: a card each
+---------------------------------------------------------------------------
 local function Card(parent)
     local c = UI.Panel(parent, "bg1", "line")
     c:EnableMouse(true)
@@ -44,51 +48,69 @@ local function Card(parent)
     return c
 end
 
-local function MoveList(parent, title)
-    local box = UI.Panel(parent, "bg1", "line")
-    box.title = UI.Text(box, 14, "muted")
-    box.title:SetPoint("TOPLEFT", 14, -12)
-    box.title:SetText(title)
-    box.rows = {}
-    for i = 1, 3 do
-        local r = CreateFrame("Button", nil, box)
-        r:SetHeight(UI.RowH(26))
-        r:SetPoint("TOPLEFT", 8, -(34 + (i - 1) * UI.RowH(28)))
-        r:SetPoint("RIGHT", -8, 0)
-        r.hover = UI.Tex(r, "BACKGROUND", "hl", 0.6)
-        r.hover:SetAllPoints()
-        r.hover:Hide()
-        r.name = UI.Text(r, 14, "text")
-        r.name:SetPoint("LEFT", 6, 0)
-        r.ch = UI.Text(r, 14, "text", "RIGHT")
-        r.ch:SetPoint("RIGHT", -6, 0)
-        r.price = UI.Text(r, 13, "muted", "RIGHT")
-        r.price:SetPoint("RIGHT", r.ch, "LEFT", -18, 0)
-        r.name:SetPoint("RIGHT", r.price, "LEFT", -10, 0)
-        r:SetScript("OnEnter", function(self) self.hover:Show(); Lab.ItemTip(self, self.id) end)
-        r:SetScript("OnLeave", function(self) self.hover:Hide(); GameTooltip:Hide() end)
-        r:SetScript("OnClick", function(self) Lab.OpenItem(self.id) end)
-        box.rows[i] = r
-    end
-    function box:Set(ids)
-        for i, r in ipairs(self.rows) do
-            local id = ids[i]
-            r:SetShown(id ~= nil)
-            if id then
-                local it = D.items[id]
-                r.id = id
-                r.name:SetText(FT.ItemText(id))
-                r.price:SetText(FT.Money(it.price, "short"))
-                r.ch:SetText(FT.Pct(it.ch1))
-            end
+-- a panel with a title line (and room on its right for a control)
+local function Box(parent, title)
+    local b = UI.Panel(parent, "bg1", "line")
+    b.title = UI.Text(b, 14, "muted")
+    b.title:SetPoint("TOPLEFT", 14, -12)
+    b.title:SetText(title)
+    return b
+end
+
+---------------------------------------------------------------------------
+-- Movers: up or down today, every item that moved, scrolls with the mouse wheel
+---------------------------------------------------------------------------
+local moversWay = "up"
+
+local function Movers(parent)
+    local box = Box(parent, L["Movers today"])
+    box.seg = UI.Segmented(box, { { "up", L["Up"] }, { "down", L["Down"] } }, function(v)
+        moversWay = v
+        box:Fill()
+    end, 20)
+    box.seg:SetPoint("TOPRIGHT", -10, -8)
+    box.list = UI.List(box, {
+        rowHeight = UI.RowH(26),
+        setup = function(row)
+            row.ch = UI.Text(row, 14, "text", "RIGHT")
+            row.ch:SetPoint("RIGHT", -4, 0); row.ch:SetWidth(52)
+            row.price = UI.Text(row, 13, "muted", "RIGHT")
+            row.price:SetPoint("RIGHT", row.ch, "LEFT", -8, 0); row.price:SetWidth(UI.RowH(70) + 4 * (tonumber(FT.S.textSize) or 0))
+            row.name = UI.Text(row, 14, "text")
+            row.name:SetPoint("LEFT", 6, 0)
+            row.name:SetPoint("RIGHT", row.price, "LEFT", -6, 0)
+        end,
+        update = function(row, id)
+            local it = D.items[id]
+            UI.FitSize(row.name, FT.ItemText(id), 14, 3)
+            row.price:SetText(FT.Money(it.price, "short"))
+            row.ch:SetText(FT.Pct(it.ch1))
+        end,
+        onClick = function(id) Lab.OpenItem(id) end,
+        onEnter = function(row, id) Lab.ItemTip(row, id) end,
+    })
+    box.list:SetPoint("TOPLEFT", 8, -38)
+    box.list:SetPoint("BOTTOMRIGHT", -6, 8)
+    function box:Fill()
+        self.seg:SetValue(moversWay)
+        local ids = {}
+        for _, id in ipairs(D.order) do
+            local ch = D.items[id].ch1
+            if (moversWay == "up" and ch > 0.005) or (moversWay == "down" and ch < -0.005) then ids[#ids + 1] = id end
         end
+        table.sort(ids, function(a, b)
+            if moversWay == "up" then return D.items[a].ch1 > D.items[b].ch1 end
+            return D.items[a].ch1 < D.items[b].ch1
+        end)
+        self.list:SetItems(ids)
+        self.list:SetEmptyText(L["Nothing moved much today."])
     end
     return box
 end
 
--- Coming up: the next sell window of something you own, the raids, your watchlist's biggest move
-local RAIDS = time({ year = 2026, month = 12, day = 9, hour = 12 })
-
+---------------------------------------------------------------------------
+-- Coming up: the next sell window of something you own, the raids, your watchlist's biggest move, the busiest day
+---------------------------------------------------------------------------
 local function Until(hour)
     local now = date("*t")
     local mins = (hour - now.hour) * 60 - now.min
@@ -99,49 +121,51 @@ local function Until(hour)
 end
 
 local function ComingUp(parent)
-    local box = UI.Panel(parent, "bg1", "line")
-    box.title = UI.Text(box, 14, "muted")
-    box.title:SetPoint("TOPLEFT", 14, -12)
-    box.title:SetText(L["Coming up"])
+    local box = Box(parent, L["Coming up"])
     box.rows = {}
-    for i = 1, 3 do
+    for i = 1, 4 do
         local r = CreateFrame("Button", nil, box)
-        r:SetHeight(UI.RowH(30))
-        r:SetPoint("TOPLEFT", 8, -(34 + (i - 1) * UI.RowH(32)))
+        r:SetHeight(UI.RowH(42))
+        r:SetPoint("TOPLEFT", 8, -(36 + (i - 1) * UI.RowH(44)))
         r:SetPoint("RIGHT", -8, 0)
         r.hover = UI.Tex(r, "BACKGROUND", "hl", 0.6)
         r.hover:SetAllPoints()
         r.hover:Hide()
         r.badge = Lab.Badge(r, 58, 18)
-        r.badge:SetPoint("LEFT", 6, 0)
-        r.when = UI.Text(r, 13, "accent", "RIGHT")
-        r.when:SetPoint("RIGHT", -6, 0)
+        r.badge:SetPoint("TOPLEFT", 6, -4)
         r.text = UI.Text(r, 14, "text")
-        r.text:SetPoint("LEFT", r.badge, "RIGHT", 10, 0)
-        r.text:SetPoint("RIGHT", r.when, "LEFT", -10, 0)
-        r:SetScript("OnEnter", function(self) self.hover:Show(); if self.id then Lab.ItemTip(self, self.id, self.why) end end)
+        r.text:SetPoint("TOPLEFT", r.badge, "TOPRIGHT", 10, 1)
+        r.text:SetPoint("RIGHT", -6, 0)
+        r.sub = UI.Text(r, 12, "accent")
+        r.sub:SetPoint("TOPLEFT", r.text, "BOTTOMLEFT", 0, -4)
+        r.sub:SetPoint("RIGHT", -6, 0)
+        r:SetScript("OnEnter", function(self)
+            self.hover:Show()
+            if self.id then Lab.ItemTip(self, self.id, self.why) elseif self.why then UI.TipText(self, self.text:GetText(), self.why) end
+        end)
         r:SetScript("OnLeave", function(self) self.hover:Hide(); GameTooltip:Hide() end)
         r:SetScript("OnClick", function(self) if self.id then Lab.OpenItem(self.id) elseif self.page then FT.Show(self.page) end end)
         box.rows[i] = r
     end
     function box:Fill()
         local lines = {}
-        -- 1: the next sell window of your most valuable holding
-        local best, bestV
+        -- the next sell window of your most valuable holding that says SELL
+        local best, bestV, bestQ
         for _, h in ipairs(D.holdings) do
             local it = D.items[h.id]
-            if it.verdict == "SELL" and (not bestV or it.price * h.qty > bestV) then best, bestV = h.id, it.price * h.qty end
+            if it.verdict == "SELL" and h.where ~= "On the AH" and (not bestV or it.price * h.qty > bestV) then
+                best, bestV, bestQ = h.id, it.price * h.qty, h.qty
+            end
         end
         if best then
             local it = D.items[best]
             lines[#lines + 1] = { kind = "SELL", id = best, text = string.format(L["%s sells best at %s"], FT.ItemText(best), FT.Hour(it.sell[1])),
-                when = Until(it.sell[1]), why = string.format(L["You hold %s. Post just before %s: that's when it's priciest."], FT.Num(400), FT.Hour(it.sell[1])) }
+                sub = Until(it.sell[1]), why = string.format(L["You hold %s. Post just before %s: that's when it's priciest."], FT.Num(bestQ), FT.Hour(it.sell[1])) }
         end
-        -- 2: the raids
         local days = math.max(0, math.ceil((RAIDS - time()) / 86400))
-        lines[#lines + 1] = { kind = "HOLD", page = "make", text = L["Raids open: hold Arcane Crystal, Elemental Fire"],
-            when = string.format(L["%d days"], days) }
-        -- 3: the watchlist's biggest move today
+        lines[#lines + 1] = { kind = "HOLD", page = "make", text = L["Raids open Dec 9: hold raid mats"],
+            sub = string.format(L["in %d days · sell Dec 5–8"], days),
+            why = L["Arcane Crystal, Elemental Fire and fire potions climb into the raids. Make gold > Raid prep has the list."] }
         local wid, wch
         local watched = {}
         for _, id in ipairs(D.watch) do watched[id] = true end
@@ -153,60 +177,84 @@ local function ComingUp(parent)
         if wid then
             local it = D.items[wid]
             lines[#lines + 1] = { kind = it.verdict, id = wid, text = string.format(L["%s %s today"], FT.ItemText(wid), FT.Pct(it.ch1)),
-                when = L["watched"], why = it.reason }
+                sub = L["your watchlist's biggest move"], why = it.reason }
         end
+        lines[#lines + 1] = { kind = "SELL", page = "market", text = L["Tuesday: the busiest day for herbs"],
+            sub = L["post Monday night"], why = L["Most of your herbs sell most on Tuesday, when the raids reset."] }
         for i, r in ipairs(self.rows) do
             local m = lines[i]
             r:SetShown(m ~= nil)
             if m then
                 r.id, r.page, r.why = m.id, m.page, m.why
                 r.badge:Set(m.kind)
-                r.text:SetText(m.text)
-                r.when:SetText(m.when or "")
+                UI.FitSize(r.text, m.text, 14, 3)
+                r.sub:SetText(m.sub or "")
             end
         end
     end
     return box
 end
 
--- Last session: how your last farm run went, and a button to start the next one
-local function LastSession(parent)
-    local box = UI.Panel(parent, "bg1", "line")
-    box.title = UI.Text(box, 14, "muted")
-    box.title:SetPoint("TOPLEFT", 14, -12)
-    box.title:SetText(L["Last session"])
-    box.all = UI.Button(box, L["All sessions"], nil, 20, "ghost", function() FT.Show("you") end)
-    box.all:FitText(16)
-    box.all:SetPoint("TOPRIGHT", -8, -8)
-    box.name = UI.Text(box, 14, "text")
-    box.name:SetPoint("TOPLEFT", box.title, "BOTTOMLEFT", 0, -10)
-    box.name:SetPoint("RIGHT", -14, 0)
-    box.gold = UI.Text(box, 22, "text")
-    box.gold:SetPoint("TOPLEFT", box.name, "BOTTOMLEFT", 0, -8)
-    box.rate = UI.Text(box, 14, "up")
-    box.rate:SetPoint("LEFT", box.gold, "RIGHT", 14, -1)
-    box.best = UI.Text(box, 13, "muted")
-    box.best:SetPoint("TOPLEFT", box.gold, "BOTTOMLEFT", 0, -8)
-    box.best:SetPoint("RIGHT", -14, 0)
-    box.start = UI.Button(box, L["Start a session"], nil, 24, "primary", function()
-        if FT.Session.Running() then FT.Session.Stop() else FT.Session.Start() end
-    end)
-    box.start:SetPoint("BOTTOMLEFT", 14, 12)
-    box.start:SetTip(L["Start a session"], L["Counts what you loot and the gold an hour, in a small panel you can fold to one line. (Sample loot in the Lab.)"])
+---------------------------------------------------------------------------
+-- In your bags: what you're carrying, its worth and what to do with each (everyone has bags)
+---------------------------------------------------------------------------
+local function Bags(parent)
+    local box = Box(parent, L["In your bags"])
+    box.total = UI.Text(box, 14, "text", "RIGHT")
+    box.total:SetPoint("TOPRIGHT", -14, -12)
+    box.list = UI.List(box, {
+        rowHeight = UI.RowH(30),
+        setup = function(row)
+            row.badge = Lab.Badge(row, 58, 18)
+            row.badge:SetPoint("LEFT", 6, 0)
+            row.worth = UI.Text(row, 13, "text", "RIGHT")
+            row.worth:SetPoint("RIGHT", -4, 0); row.worth:SetWidth(UI.RowH(70) + 4 * (tonumber(FT.S.textSize) or 0))
+            row.name = UI.Text(row, 14, "text")
+            row.name:SetPoint("LEFT", row.badge, "RIGHT", 10, 0)
+            row.name:SetPoint("RIGHT", row.worth, "LEFT", -6, 0)
+        end,
+        update = function(row, h)
+            local it = D.items[h.id]
+            row.badge:Set(it.verdict)
+            UI.FitSize(row.name, FT.ItemText(h.id) .. FT.C("dim", " ×" .. FT.Num(h.qty)), 14, 3)
+            row.worth:SetText(FT.Money(it.price * h.qty, "gold"))
+        end,
+        onClick = function(h) Lab.OpenItem(h.id) end,
+        onEnter = function(row, h) Lab.ItemTip(row, h.id) end,
+    })
+    box.list:SetPoint("TOPLEFT", 8, -38)
+    box.list:SetPoint("BOTTOMRIGHT", -6, 8)
     function box:Fill()
-        local s = D.sessions[1]
-        self.name:SetText(s.name .. FT.C("dim", "  ·  " .. s.zone .. "  ·  " .. string.format(L["%d min"], s.minutes)))
-        self.gold:SetText(FT.Money(s.gold, "gold"))
-        self.rate:SetText(FT.Money(math.floor(s.gold * 60 / s.minutes), "gold") .. " " .. L["an hour"])
-        self.best:SetText(L["Best find"] .. ": " .. FT.ItemText(s.top) .. FT.C("dim", " ×" .. s.found))
-        self.start:SetLabel(FT.Session.Running() and L["Stop the session"] or L["Start a session"])
-        self.start:FitText(28)
+        local rows, total = {}, 0
+        for _, h in ipairs(D.holdings) do
+            if h.where == "Bags" then
+                rows[#rows + 1] = h
+                total = total + D.items[h.id].price * h.qty
+            end
+        end
+        table.sort(rows, function(a, b) return D.items[a.id].price * a.qty > D.items[b.id].price * b.qty end)
+        self.list:SetItems(rows)
+        self.total:SetText(FT.Money(total, "gold"))
     end
     return box
 end
 
+---------------------------------------------------------------------------
+-- The page
+---------------------------------------------------------------------------
+-- lay frames on three equal columns of a row
+local function Thirds(row, frames)
+    UI.OnSize(row, function(self, w, h)
+        local cw = math.floor((w - GAP * 2) / 3)
+        for i, f in ipairs(frames) do
+            f:ClearAllPoints()
+            f:SetPoint("TOPLEFT", self, "TOPLEFT", (i - 1) * (cw + GAP), 0)
+            f:SetSize(cw, h)
+        end
+    end)
+end
+
 function P.Build(p)
-    -- what you own is worth
     local own = UI.Panel(p, "bg1", "line")
     own:SetPoint("TOPLEFT", PAD, -PAD)
     own:SetPoint("TOPRIGHT", -PAD, -PAD)
@@ -225,12 +273,11 @@ function P.Build(p)
     P.spark:SetPoint("RIGHT", days, "LEFT", -12, 0)
     own:EnableMouse(true)
     own:SetScript("OnEnter", function(self)
-        UI.TipText(self, L["Everything you own"], L["Bags, bank, mail and every character, at today's prices, plus your gold. Click: You."])
+        UI.TipText(self, L["Everything you own"], L["Bags, bank, mail, the auction house and every character, at today's prices, plus your gold. Click: where it all is (You)."])
     end)
     own:SetScript("OnLeave", function() GameTooltip:Hide() end)
     own:SetScript("OnMouseUp", function() FT.Show("you") end)
 
-    -- Your top 3
     local title = UI.Text(p, 17, "accent")
     title:SetPoint("TOPLEFT", own, "BOTTOMLEFT", 2, -18)
     title:SetText(L["Your top 3"])
@@ -238,50 +285,18 @@ function P.Build(p)
     hint:SetPoint("LEFT", title, "RIGHT", 12, -1)
     hint:SetText(L["what to do with your stuff right now · hover for why"])
 
-    P.cards = {}
-    local row = CreateFrame("Frame", nil, p)
-    row:SetPoint("TOPLEFT", title, "BOTTOMLEFT", -2, -10)
-    row:SetPoint("RIGHT", -PAD, 0)
-    row:SetHeight(UI.RowH(118))
-    for i = 1, 3 do P.cards[i] = Card(row) end
-    UI.OnSize(row, function(self, w)
-        local cw = math.floor((w - GAP * 2) / 3)
-        for i, c in ipairs(P.cards) do
-            c:ClearAllPoints()
-            c:SetPoint("TOPLEFT", (i - 1) * (cw + GAP), 0)
-            c:SetSize(cw, self:GetHeight())
-        end
-    end)
+    local top = CreateFrame("Frame", nil, p)
+    top:SetPoint("TOPLEFT", title, "BOTTOMLEFT", -2, -10)
+    top:SetPoint("RIGHT", -PAD, 0)
+    top:SetHeight(UI.RowH(118))
+    P.cards = { Card(top), Card(top), Card(top) }
+    Thirds(top, P.cards)
 
-    -- going up / going down
-    P.up = MoveList(p, L["Going up today"])
-    P.down = MoveList(p, L["Going down today"])
-    local movers = CreateFrame("Frame", nil, p)
-    movers:SetPoint("TOPLEFT", row, "BOTTOMLEFT", 0, -GAP)
-    movers:SetPoint("RIGHT", -PAD, 0)
-    movers:SetHeight(UI.RowH(124))
-    UI.OnSize(movers, function(self, w, h)
-        local bw = math.floor((w - GAP) / 2)
-        P.up:ClearAllPoints(); P.up:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0); P.up:SetSize(bw, h)
-        P.down:ClearAllPoints(); P.down:SetPoint("TOPLEFT", self, "TOPLEFT", bw + GAP, 0); P.down:SetSize(bw, h)
-    end)
-
-    local whole = UI.Button(p, L["Whole market"], nil, 22, "default", function() FT.Show("market") end)
-    whole:FitText(28)
-    whole:SetPoint("BOTTOMRIGHT", row, "TOPRIGHT", 0, 8)
-
-    -- what's next: coming up (left) and your last session (right)
-    P.coming = ComingUp(p)
-    P.last = LastSession(p)
     local bottom = CreateFrame("Frame", nil, p)
-    bottom:SetPoint("TOPLEFT", movers, "BOTTOMLEFT", 0, -GAP)
+    bottom:SetPoint("TOPLEFT", top, "BOTTOMLEFT", 0, -GAP)
     bottom:SetPoint("BOTTOMRIGHT", -PAD, PAD)
-    UI.OnSize(bottom, function(self, w, h)
-        local bw = math.floor((w - GAP) / 2)
-        P.coming:ClearAllPoints(); P.coming:SetPoint("TOPLEFT", self, "TOPLEFT", 0, 0); P.coming:SetSize(bw, h)
-        P.last:ClearAllPoints(); P.last:SetPoint("TOPLEFT", self, "TOPLEFT", bw + GAP, 0); P.last:SetSize(bw, h)
-    end)
-    FT.On("FT_SESSION", function() if P.last and P.last:IsVisible() then P.last:Fill() end end)
+    P.movers, P.coming, P.bags = Movers(bottom), ComingUp(bottom), Bags(bottom)
+    Thirds(bottom, { P.movers, P.coming, P.bags })
 end
 
 function P.Show()
@@ -291,8 +306,11 @@ function P.Show()
     P.since:SetText(FT.SignedMoney(D.since, "gold") .. " " .. L["since yesterday"])
     P.spark:SetValues(D.worthLine, "up")
     for i, c in ipairs(P.cards) do c:Set(D.top[i]) end
-    P.up:Set(D.up)
-    P.down:Set(D.down)
+    P.movers:Fill()
     P.coming:Fill()
-    P.last:Fill()
+    P.bags:Fill()
+end
+
+function P.Dirty()
+    if P.cards and P.cards[1]:IsVisible() then P.Show() end
 end

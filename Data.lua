@@ -26,27 +26,27 @@ D.items = {
         perDay = 180, verdict = "WAIT", reason = "Sliding this week: wait for it to settle before buying.", market = "Flooded",
         sell = { 18, 21 }, buy = { 4, 8 }, day = "Sunday", trend = -0.08,
         craft = "Arcanite Bar needs 1 with an Arcane Crystal.", farm = "Smelt Thorium Ore." },
-    [12360] = { name = "Arcanite Bar", q = 2, kind = "Metal & Stone", price = 48 * G, normal = 46 * G, ch1 = 0.01, ch7 = 0.05, ch30 = 0.14,
-        perDay = 20, verdict = "CRAFT", reason = "Costs about 42g to make, sells for 48g. Once a day.", market = "Thin",
+    [12360] = { made = true, name = "Arcanite Bar", q = 2, kind = "Metal & Stone", price = 48 * G, normal = 46 * G, ch1 = 0.01, ch7 = 0.05, ch30 = 0.14,
+        perDay = 20, verdict = "CRAFT", reason = "Costs about 39g to make, sells for 48g. Once a day.", market = "Thin",
         sell = { 19, 22 }, buy = { 5, 8 }, day = "Tuesday", trend = 0.22,
         craft = "Transmute: Arcane Crystal + Thorium Bar, once a day.", farm = "Made, not farmed." },
-    [13444] = { name = "Major Mana Potion", q = 1, kind = "Potion", price = 2 * G + 5 * S, normal = 1 * G + 80 * S, ch1 = 0.18, ch7 = 0.10, ch30 = 0.12,
+    [13444] = { made = true, name = "Major Mana Potion", q = 1, kind = "Potion", price = 6 * G + 5 * S, normal = 5 * G + 13 * S, ch1 = 0.18, ch7 = 0.10, ch30 = 0.12,
         perDay = 140, verdict = "SELL", reason = "18% up today ahead of raid night. Post before 7 pm.", market = "Busy",
         sell = { 17, 19 }, buy = { 2, 6 }, day = "Tuesday", trend = 0.10,
         craft = "Alchemy 295: Dreamfoil + Icecap + Crystal Vial.", farm = "Made, not farmed." },
-    [13457] = { name = "Greater Fire Protection Potion", q = 1, kind = "Potion", price = 3 * G + 60 * S, normal = 3 * G, ch1 = 0.04, ch7 = 0.12, ch30 = 0.30,
+    [13457] = { made = true, name = "Greater Fire Protection Potion", q = 1, kind = "Potion", price = 5 * G + 40 * S, normal = 4 * G + 80 * S, ch1 = 0.04, ch7 = 0.12, ch30 = 0.30,
         perDay = 35, verdict = "HOLD", reason = "Onyxia's Lair needs it: rises into Dec 9.", market = "Healthy",
         sell = { 19, 21 }, buy = { 4, 7 }, day = "Tuesday", trend = 0.35,
         craft = "Elemental Fire + Dreamfoil.", farm = "Made, not farmed." },
-    [13510] = { name = "Flask of the Titans", q = 1, kind = "Flask", price = 62 * G, normal = 58 * G, ch1 = 0.01, ch7 = 0.03, ch30 = 0.09,
-        perDay = 6, verdict = "CRAFT", reason = "Materials about 51g, sells for 62g. Thin market: 6 a day.", market = "Thin",
+    [13510] = { made = true, name = "Flask of the Titans", q = 1, kind = "Flask", price = 148 * G, normal = 138 * G, ch1 = 0.01, ch7 = 0.03, ch30 = 0.09,
+        perDay = 6, verdict = "CRAFT", reason = "Materials about 129g, sells for 148g. Thin market: 6 a day.", market = "Thin",
         sell = { 19, 21 }, buy = { 5, 8 }, day = "Tuesday", trend = 0.12,
         craft = "30 Stonescale Oil, 10 Gromsblood, 1 Black Lotus.", farm = "Made, not farmed." },
     [13468] = { name = "Black Lotus", q = 2, kind = "Herb", price = 94 * G, normal = 92 * G, ch1 = 0.02, ch7 = 0.01, ch30 = 0.06,
         perDay = 8, verdict = "HOLD", reason = "Steady, and flasks need it once raids start.", market = "Thin",
         sell = { 20, 22 }, buy = { 4, 7 }, day = "Tuesday", trend = 0.06,
         craft = "Every flask uses 1.", farm = "Rare spawns: Burning Steppes, Winterspring, Silithus." },
-    [14342] = { name = "Mooncloth", q = 1, kind = "Cloth", price = 7 * G + 80 * S, normal = 7 * G + 20 * S, ch1 = 0.07, ch7 = 0.05, ch30 = 0.08,
+    [14342] = { made = true, name = "Mooncloth", q = 1, kind = "Cloth", price = 7 * G + 80 * S, normal = 7 * G + 20 * S, ch1 = 0.07, ch7 = 0.05, ch30 = 0.08,
         perDay = 25, verdict = "SELL", reason = "7% up today: a good day to post yours.", market = "Healthy",
         sell = { 19, 21 }, buy = { 3, 6 }, day = "Wednesday", trend = 0.08,
         craft = "Tailoring cooldown: 2 Felcloth, every 4 days.", farm = "Made, not farmed." },
@@ -83,7 +83,9 @@ D.order = { 13463, 12363, 10620, 12359, 12360, 13444, 13457, 13510, 13468, 14342
 D.holdings = {
     { id = 13463, qty = 400, where = "Bank" }, { id = 12363, qty = 12, where = "Bags" }, { id = 14047, qty = 640, where = "Bank" },
     { id = 13468, qty = 3, where = "Bank alt" }, { id = 10620, qty = 120, where = "Bags" }, { id = 7068, qty = 18, where = "Mail" },
-    { id = 14344, qty = 9, where = "Bags" },
+    { id = 14344, qty = 9, where = "Bags" }, { id = 12808, qty = 14, where = "Bags" }, { id = 8170, qty = 60, where = "Bags" },
+    { id = 13926, qty = 2, where = "Bags" }, { id = 13444, qty = 20, where = "On the AH" }, { id = 14342, qty = 4, where = "On the AH" },
+    { id = 13510, qty = 2, where = "Bank alt" }, { id = 12360, qty = 3, where = "Bank" },
 }
 D.watch = { 13444, 13457, 13510, 13926 }
 D.gold = 1240 * G -- coins on the characters
@@ -117,9 +119,9 @@ D.make = {
         { id = 12359, kind = "WAIT", text = "Cheap but still sliding: wait." },
     },
     craft = {
-        { id = 12360, kind = "CRAFT", gold = 6 * G, text = "Transmute today: costs ~42g, sells for 48g." },
-        { id = 13510, kind = "CRAFT", gold = 11 * G, text = "Costs ~51g, sells for 62g; 6 sell a day." },
-        { id = 13444, kind = "CRAFT", gold = 40 * S, text = "40s a potion, sells 140 a day." },
+        { id = 12360, kind = "CRAFT", gold = 6 * G, text = "Transmute today: costs ~39g, sells for 48g." },
+        { id = 13510, kind = "CRAFT", gold = 11 * G, text = "Costs ~129g, sells for 148g; 6 sell a day." },
+        { id = 13444, kind = "CRAFT", gold = 60 * S, text = "60s a potion, sells 140 a day." },
     },
     farm = {
         { id = 10620, kind = "FARM", each = 1 * G + 40 * S, text = "~300 sell a day. Un'Goro, Burning Steppes." },
@@ -133,6 +135,51 @@ D.make = {
         { id = 13444, kind = "SELL", text = "Already up 18%: sell into raid nights." },
     },
 }
+
+-- crafted items: what goes in (an item id or a name, how many, each), and a note
+D.made = {
+    [12360] = { mats = { { 12363, 1 }, { 12359, 1 } }, note = "Alchemy transmute, once a day." },
+    [13444] = { mats = { { 13463, 3 }, { "Icecap", 2, 45 * S }, { "Crystal Vial", 1, 4 * S } }, note = "Alchemy 295." },
+    [13457] = { mats = { { 7068, 1 }, { 13463, 1 }, { "Crystal Vial", 1, 4 * S } }, note = "Alchemy 290." },
+    [13510] = { mats = { { "Stonescale Oil", 30, 1 * G }, { "Gromsblood", 10, 50 * S }, { 13468, 1 } }, note = "Alchemy 300." },
+    [14342] = { mats = { { "Felcloth", 2, 90 * S } }, note = "Tailoring, every 4 days." },
+}
+
+-- materials: the best things they're made into (product, gold one use of it brings), where to farm them
+D.crafts = {
+    [13463] = { { 13444, 60 * S }, { 13457, 59 * S } },
+    [12363] = { { 12360, 6 * G }, { 13510, 0 } },
+    [10620] = { { 12359, -23 * S } },
+    [12359] = { { 12360, 3 * G } },
+    [7068] = { { 13457, 59 * S } },
+    [13468] = { { 13510, 11 * G } },
+    [14047] = { { "Runecloth Bag", -1 * G } },
+    [8170] = { { "Rugged Armor Kit", -40 * S } },
+    [12808] = { { "Flask of Supreme Power", 2 * G } },
+    [13926] = { { "Jewelry (next phase)", 0 } },
+    [14344] = { { "Enchant Weapon: Crusader", 4 * G } },
+}
+D.spots = {
+    [13463] = { { "Felwood", "herb 270+" }, { "Un'Goro Crater", "herb 270+" }, { "Azshara", "herb 270+" } },
+    [12363] = { { "Un'Goro Crater", "Rich Thorium veins" }, { "Burning Steppes", "Rich Thorium veins" }, { "Eastern Plaguelands", "Rich Thorium veins" } },
+    [10620] = { { "Un'Goro Crater", "mining 245+" }, { "Burning Steppes", "mining 245+" }, { "Winterspring", "mining 245+" } },
+    [13468] = { { "Burning Steppes", "rare spawn" }, { "Winterspring", "rare spawn" }, { "Silithus", "rare spawn" } },
+    [14047] = { { "Eastern Plaguelands", "humanoids 55+" }, { "Winterspring", "humanoids 55+" }, { "Silithus", "humanoids 55+" } },
+    [8170] = { { "Un'Goro Crater", "beasts 50+" }, { "Winterspring", "beasts 50+" }, { "Felwood", "beasts 50+" } },
+    [7068] = { { "Searing Gorge", "fire elementals" }, { "Burning Steppes", "fire elementals" }, { "Un'Goro Crater", "fire elementals" } },
+    [12808] = { { "Eastern Plaguelands", "undead 55+" }, { "Western Plaguelands", "undead 55+" }, { "Scholomance", "undead" } },
+    [13926] = { { "Azshara", "Big-mouth Clams" }, { "Feralas", "Big-mouth Clams" } },
+    [14344] = { { "Disenchanting", "blues of level 56+" } },
+}
+
+-- how quickly what you hold turns into gold: one seller can take about a fifth of a day's sales
+function D.Liquidity(h)
+    if h.where == "On the AH" then return "listed" end
+    local it = D.items[h.id]
+    local days = h.qty / math.max(1, (it.perDay or 1) * 0.2)
+    if days <= 1 then return "today" elseif days <= 7 then return "week" end
+    return "slow"
+end
 
 -- the moves of the day (Today)
 D.up = { 13444, 7068, 13463 }
