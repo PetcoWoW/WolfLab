@@ -12,14 +12,14 @@ local SECTIONS = {
     { "flip", L["Flip it"], L["Bought under its usual price, it sells back up: buy now, list again."] },
     { "craft", L["Craft it"], L["Worth more made than its materials cost, with a recipe one of your characters knows."] },
     { "farm", L["Farm it"], L["Worth gathering for your professions and level: how much each and how many sell a day."] },
-    { "raid", L["Raid prep"], L["What the raids on Dec 9 will need: hold it into the run-up, sell Dec 5–8."] },
+    { "coming", L["Coming up"], L["What should pay next week, and how sure Wolf is: each kind of call checked against the last 90 days."] },
 }
 local current = "flip"
 
 -- a list of moves: two lines a row
 function Lab.MoveRows(parent)
     local list = UI.List(parent, {
-        rowHeight = UI.RowH(48),
+        rowHeight = UI.RowH(52),
         setup = function(row)
             row.badge = Lab.Badge(row, 64, 20)
             row.badge:SetPoint("LEFT", 10, 0)
@@ -32,15 +32,33 @@ function Lab.MoveRows(parent)
             row.text = UI.Text(row, 13, "muted")
             row.text:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -4)
             row.text:SetPoint("RIGHT", row.gold, "LEFT", -12, 0)
+            if row.name.SetWordWrap then row.name:SetWordWrap(false) end
             row.line = UI.HLine(row, "line", 0.35)
             row.line:SetPoint("BOTTOMLEFT", 6, 0)
             row.line:SetPoint("BOTTOMRIGHT", -6, 0)
         end,
         update = function(row, m)
+            -- a heading row (Coming up: Best farms next week, The raids)
+            row.badge:SetShown(not m.head)
+            row.text:SetShown(not m.head)
+            if m.head then
+                row.name:SetText(FT.C("accent", L[m.head]))
+                row.gold:SetText("")
+                return
+            end
             row.badge:Set(m.kind)
             row.name:SetText(FT.ItemText(m.id))
-            row.text:SetText(m.text)
-            if m.each then
+            if m.sure then
+                UI.FitBits(row.text, (m.hour and (FT.C("text", "~" .. FT.Money(m.hour, "gold") .. " " .. L["an hour"]) .. "  ·  ") or "") .. m.text)
+            else
+                row.text:SetText(m.text)
+            end
+            if m.sure then
+                -- how sure: high from 75, medium from 55, else low - with the number
+                local c = m.sure >= 75 and "up" or (m.sure >= 55 and "accent" or "dim")
+                local w = m.sure >= 75 and L["High"] or (m.sure >= 55 and L["Medium"] or L["Low"])
+                row.gold:SetText(FT.C(c, m.sure .. "%") .. FT.C("dim", " " .. w))
+            elseif m.each then
                 row.gold:SetText(FT.Money(m.each, "short") .. FT.C("dim", " " .. L["each"]))
             elseif m.gold then
                 row.gold:SetText(FT.C("up", "+") .. FT.Money(m.gold, "gold"))
@@ -48,8 +66,20 @@ function Lab.MoveRows(parent)
                 row.gold:SetText(FT.Money(D.items[m.id].price, "short"))
             end
         end,
-        onClick = function(m) Lab.OpenItem(m.id) end,
-        onEnter = function(row, m) Lab.ItemTip(row, m.id, m.text) end,
+        onClick = function(m) if m.id then Lab.OpenItem(m.id) end end,
+        onEnter = function(row, m)
+            if not m.id then return end
+            if m.sure then
+                Lab.ItemTip(row, m.id, m.text)
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddDoubleLine(L["How sure"], m.sure .. "%", 1, 0.82, 0, 1, 1, 1)
+                GameTooltip:AddLine(string.format(L["Calls like this came true %s times in the last 90 days. Behind this one: %s."], m.record, m.data), 0.75, 0.78, 0.82, true)
+                GameTooltip:AddLine(L["Each call is scored a week later: the record keeps itself honest."], 0.58, 0.55, 0.5, true)
+                GameTooltip:Show()
+            else
+                Lab.ItemTip(row, m.id, m.text)
+            end
+        end,
     })
     return list
 end

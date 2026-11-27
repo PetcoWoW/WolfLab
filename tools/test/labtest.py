@@ -60,7 +60,7 @@ for _, key in ipairs({ "today", "market", "make", "you", "settings" }) do
   mock.run(0.5)
   check(key, WolfLabFrame)
 end
-for _, v in ipairs({ "flip", "craft", "farm", "raid" }) do
+for _, v in ipairs({ "flip", "craft", "farm", "coming" }) do
   step("make " .. v, function() FT.Show("make"); FT.Pages.make.seg.buttons[1].onClick() end)
   step("make view " .. v, function()
     for _, b in ipairs(FT.Pages.make.seg.buttons) do if b.value == v then b.onClick() end end

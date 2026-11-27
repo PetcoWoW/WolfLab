@@ -133,11 +133,26 @@ D.make = {
         { id = 14047, kind = "FARM", each = 32 * S, text = "~900 sell a day. Humanoids 55+." },
         { id = 13463, kind = "FARM", each = 1 * G + 40 * S, text = "~300 sell a day. Felwood, Un'Goro." },
     },
-    raid = {
-        { id = 12363, kind = "HOLD", text = "Climbing into the raids: sell Dec 5–8." },
-        { id = 13457, kind = "HOLD", text = "Onyxia's Lair: fire resistance sells in raid week." },
-        { id = 7068, kind = "HOLD", text = "Fire potions need it: still climbing." },
-        { id = 13444, kind = "SELL", text = "Already up 18%: sell into raid nights." },
+    -- Coming up (v0.6): next week's best farms and what the raids will pull, each with how sure Wolf is.
+    -- sure: how often this kind of call came true over the last 90 days (checked by the price robot), with
+    -- how much data stands behind this one
+    coming = {
+        { head = "Best farms next week" },
+        { id = 13463, kind = "FARM", hour = 42 * G, sure = 84, record = "41 of 49", data = "1,240 herbs logged by Wolf users",
+          text = "Felwood, Un'Goro 54-58  ·  flask demand lifts it ~10%" },
+        { id = 10620, kind = "FARM", hour = 31 * G, sure = 76, record = "38 of 50", data = "2,900 nodes logged",
+          text = "Burning Steppes 52-56  ·  steady, crafters buy it all week" },
+        { id = 7068, kind = "FARM", hour = 26 * G, sure = 63, record = "29 of 46", data = "410 corpses logged",
+          text = "Searing Gorge 48-52  ·  fire potions for raid week" },
+        { id = 14047, kind = "FARM", hour = 19 * G, sure = 52, record = "24 of 46", data = "3,100 corpses logged",
+          text = "Humanoids 55+  ·  easing as more people farm it" },
+        { head = "The raids (Dec 9)" },
+        { id = 12363, kind = "HOLD", sure = 81, record = "17 of 21", data = "4 raid openings seen",
+          text = "Climbs into raid week  ·  hold, sell Dec 5-8" },
+        { id = 13457, kind = "HOLD", sure = 72, record = "13 of 18", data = "Onyxia's Lair needs it",
+          text = "Fire resistance sells in raid week  ·  hold" },
+        { id = 13444, kind = "SELL", sure = 66, record = "12 of 18", data = "up 18% already",
+          text = "Already climbed  ·  sell into the raid nights" },
     },
 }
 

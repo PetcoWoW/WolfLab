@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: |cfff0b90bWolf|r Lab
 ## Notes: A preview of Wolf's next look, with sample data only. Type /wolflab. Reads nothing from the game's auction house, your bags or other addons and sends nothing.
-## Version: 0.5
+## Version: 0.6
 ## Author: PetcoWoW
 ## X-Website: https://github.com/PetcoWoW/WolfLab
 ## X-License: Apache-2.0

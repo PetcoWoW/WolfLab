@@ -17,7 +17,7 @@ Click through the new screens in game before they ship in Wolf.
 - **Market:** the list on the left; an item's page with the verdict first, the chart (7D / 30D / 90D), and beside it
   sections that fit the item (a material: Best crafts, Where to farm; a crafted item: Craft it). Watch, Wowhead, Share.
 - **When it sells:** when to sell, when to buy, the busiest day, one hour-by-hour strip; the charts on request.
-- **Make gold:** Flip it, Craft it, Farm it, Raid prep.
+- **Make gold:** Flip it, Craft it, Farm it, Coming up (next week's best farms and the raids, each with how sure Wolf is).
 - **You:** Holdings with a donut of where your gold sits (where it is / how liquid: hover, click to filter), each
   holding with its verdict; Sessions; Characters.
 - **Settings:** look, text size, meme words.
