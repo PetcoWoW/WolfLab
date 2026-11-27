@@ -1,0 +1,15 @@
+The Wolf of Booty Bay
+Copyright 2026 PetcoWoW
+
+This addon is a modified version of ForeverTrading by thewoolfi
+(https://github.com/thewoolfi/ForeverTrading), licensed under the
+Apache License, Version 2.0 (see LICENSE).
+
+Changes from ForeverTrading include: a new name and saved data, removal of
+the Russian translation, the light and classic styles and the Mastercraft
+integration, larger text options, plain-English labels, and new features.
+Files changed from the original carry "built on ForeverTrading" in their
+first line.
+
+The Sofia Sans Condensed font in media/ is licensed under the SIL Open Font
+License 1.1 (media/SofiaSansCondensed-OFL.txt).

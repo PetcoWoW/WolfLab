@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: |cfff0b90bWolf|r Lab
+## Notes: A preview of Wolf's next look, with sample data only. Type /wolflab. Reads nothing from the game's auction house, your bags or other addons and sends nothing.
+## Version: 0.1
+## Author: PetcoWoW
+## X-Website: https://github.com/PetcoWoW/WolfLab
+## X-License: Apache-2.0
+## SavedVariables: WolfLabDB
+## IconTexture: Interface\AddOns\WolfLab\media\logo
+
+Core.lua
+Data.lua
+UI\Theme.lua
+UI\Widgets.lua
+UI\Chart.lua
+UI\Lab.lua
+UI\Today.lua
+UI\Market.lua
+UI\WhenSells.lua
+UI\MakeGold.lua
+UI\You.lua
+UI\Settings.lua

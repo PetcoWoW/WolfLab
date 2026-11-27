@@ -1,0 +1,62 @@
+# Every push to main: check the Lab (syntax, audit, the load test in both looks and every text size), then publish
+# it as a GitHub release that WowUp picks up (WolfLab-<version>.zip + release.json, as Wolf does).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check it
+        run: bash tools/test/run.sh
+
+      - name: Package
+        run: |
+          BASE=$(grep -m1 '^## Version:' WolfLab.toc | sed 's/^## Version: *//; s/\r//')
+          VERSION="$BASE.$(date -u +%Y%m%d%H%M)"
+          mkdir -p dist/WolfLab
+          git archive HEAD | tar -x -C dist/WolfLab
+          ( cd dist/WolfLab && rm -rf .github tools .gitignore README.md \
+            && sed -i "s/^## Version: .*/## Version: $VERSION/" WolfLab.toc )
+          ( cd dist && zip -qr "WolfLab-$VERSION.zip" WolfLab )
+          # for WowUp: which zip is the addon, for every game type it may call WoW Forever by
+          node -e '
+            const [file, version, iface] = process.argv.slice(1);
+            const flavors = ["mainline", "classic", "bcc", "wrath", "cata", "mists"];
+            const release = { name: "Wolf Lab", version, filename: file, nolib: false,
+              metadata: flavors.map(flavor => ({ flavor, interface: Number(iface) })) };
+            require("fs").writeFileSync("dist/release.json", JSON.stringify({ releases: [release] }));
+          ' "WolfLab-$VERSION.zip" "$VERSION" "$(grep -m1 '^## Interface:' WolfLab.toc | sed 's/^## Interface: *//; s/\r//')"
+          cat dist/release.json; echo
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" "dist/WolfLab-$VERSION.zip" dist/release.json \
+            --title "Wolf Lab v$VERSION" \
+            --notes "$(git log -1 --pretty=%s)" \
+            --latest
+          # keep the newest 5
+          gh release list --limit 50 --json tagName,publishedAt \
+            --jq 'sort_by(.publishedAt) | reverse | .[5:] | .[].tagName' |
+          while read -r tag; do
+            [ "$tag" = "v$VERSION" ] && continue
+            gh release delete "$tag" --yes --cleanup-tag || true
+          done
