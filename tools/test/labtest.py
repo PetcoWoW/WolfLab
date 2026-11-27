@@ -83,7 +83,21 @@ for _, id in ipairs(FT.Data.order) do
   check("item " .. id, WolfLabFrame)
   -- a crafted item: Craft it, never Best crafts or Where to farm; a material: never Craft it
   local titles = {}
-  for _, f in ipairs(FT.Pages.market.item.folds.secs) do if f:IsShown() then titles[#titles + 1] = f.title:GetText() end end
+  for _, f in ipairs(FT.Pages.market.item.folds.secs) do
+    if f:IsShown() then
+      titles[#titles + 1] = f.title:GetText()
+      -- a list section: every line the same size
+      if f.title:GetText() == "Where to farm" or f.title:GetText() == "Best crafts" or f.title:GetText() == "Craft it" then
+        local _, size = f.sum:GetFont()
+        for _, t in ipairs(f.more) do
+          if t:IsShown() then
+            local _, s2 = t:GetFont()
+            if s2 ~= size then mock.err("sizes " .. id, f.title:GetText() .. ": lines at " .. tostring(size) .. " and " .. tostring(s2)) end
+          end
+        end
+      end
+    end
+  end
   local t = table.concat(titles, ",")
   if FT.Data.items[id].made then
     if t:find("Best crafts") or t:find("Where to farm") or not t:find("Craft it") then mock.err("sections " .. id, "crafted item shows: " .. t) end
@@ -118,9 +132,21 @@ for _, key in ipairs({ "today", "market", "make", "you" }) do
 end
 -- the sample session: open, folded, unfolded, from Today's button and the minimap's right-click
 -- Today's movers both ways
-step("movers down", function() FT.Show("today"); FT.Pages.today.movers.seg.buttons[2].onClick() end)
-check("today movers down", WolfLabFrame)
-step("movers up", function() FT.Pages.today.movers.seg.buttons[1].onClick() end)
+-- Today's bottom row, left to right: In your bags, Going down, Going up; each with rows
+step("today row", function()
+  FT.Show("today")
+  local T = FT.Pages.today
+  local order = { { T.bags, "In your bags" }, { T.down, "Going down today" }, { T.up, "Going up today" } }
+  local lastX = -1
+  for _, o in ipairs(order) do
+    local x = mock.layout.Rect(o[1])[1]
+    if o[1].title:GetText() ~= o[2] then mock.err("today row", "card says " .. tostring(o[1].title:GetText())) end
+    if x <= lastX then mock.err("today row", o[2] .. " is out of order") end
+    if #o[1].list.items == 0 then mock.err("today row", o[2] .. " is empty") end
+    lastX = x
+  end
+  for _, id in ipairs(T.down.list.items) do if FT.Data.items[id].ch1 >= 0 then mock.err("today row", "a riser in Going down") end end
+end)
 -- You: the donut, both views, every slice picked and picked again
 for _, v in ipairs({ "where", "liquid" }) do
   step("donut view " .. v, function()

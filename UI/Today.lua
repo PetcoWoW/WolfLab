@@ -1,5 +1,5 @@
 -- Wolf Lab: Today, the first page. What you own is worth, then two rows on the same three columns: Your top 3, and
--- under them Movers (up or down today, scrolls), Coming up, and In your bags.
+-- under them In your bags, Going down today and Going up today (each scrolls).
 local ADDON, FT = ...
 local UI, L = FT.UI, FT.L
 local D, Lab = FT.Data, FT.Lab
@@ -8,7 +8,6 @@ local P = {}
 FT.Pages.today = P
 
 local PAD, GAP = 14, 12
-local RAIDS = time({ year = 2026, month = 12, day = 9, hour = 12 })
 
 ---------------------------------------------------------------------------
 -- Your top 3: a card each
@@ -58,17 +57,10 @@ local function Box(parent, title)
 end
 
 ---------------------------------------------------------------------------
--- Movers: up or down today, every item that moved, scrolls with the mouse wheel
+-- Movers today: a card for what went up, one for what went down; every item that moved, scrolls with the wheel
 ---------------------------------------------------------------------------
-local moversWay = "up"
-
-local function Movers(parent)
-    local box = Box(parent, L["Movers today"])
-    box.seg = UI.Segmented(box, { { "up", L["Up"] }, { "down", L["Down"] } }, function(v)
-        moversWay = v
-        box:Fill()
-    end, 20)
-    box.seg:SetPoint("TOPRIGHT", -10, -8)
+local function Movers(parent, way)
+    local box = Box(parent, way == "up" and L["Going up today"] or L["Going down today"])
     box.list = UI.List(box, {
         rowHeight = UI.RowH(26),
         setup = function(row)
@@ -92,105 +84,17 @@ local function Movers(parent)
     box.list:SetPoint("TOPLEFT", 8, -38)
     box.list:SetPoint("BOTTOMRIGHT", -6, 8)
     function box:Fill()
-        self.seg:SetValue(moversWay)
         local ids = {}
         for _, id in ipairs(D.order) do
             local ch = D.items[id].ch1
-            if (moversWay == "up" and ch > 0.005) or (moversWay == "down" and ch < -0.005) then ids[#ids + 1] = id end
+            if (way == "up" and ch > 0.005) or (way == "down" and ch < -0.005) then ids[#ids + 1] = id end
         end
-        table.sort(ids, function(a, b)
-            if moversWay == "up" then return D.items[a].ch1 > D.items[b].ch1 end
-            return D.items[a].ch1 < D.items[b].ch1
+        table.sort(ids, function(x, y)
+            if way == "up" then return D.items[x].ch1 > D.items[y].ch1 end
+            return D.items[x].ch1 < D.items[y].ch1
         end)
         self.list:SetItems(ids)
         self.list:SetEmptyText(L["Nothing moved much today."])
-    end
-    return box
-end
-
----------------------------------------------------------------------------
--- Coming up: the next sell window of something you own, the raids, your watchlist's biggest move, the busiest day
----------------------------------------------------------------------------
-local function Until(hour)
-    local now = date("*t")
-    local mins = (hour - now.hour) * 60 - now.min
-    if mins <= 0 then mins = mins + 24 * 60 end
-    local hh, mm = math.floor(mins / 60), mins % 60
-    if hh == 0 then return string.format(L["in %dm"], mm) end
-    return string.format(L["in %dh %dm"], hh, mm)
-end
-
-local function ComingUp(parent)
-    local box = Box(parent, L["Coming up"])
-    box.rows = {}
-    for i = 1, 4 do
-        local r = CreateFrame("Button", nil, box)
-        r:SetHeight(UI.RowH(42))
-        r:SetPoint("TOPLEFT", 8, -(36 + (i - 1) * UI.RowH(44)))
-        r:SetPoint("RIGHT", -8, 0)
-        r.hover = UI.Tex(r, "BACKGROUND", "hl", 0.6)
-        r.hover:SetAllPoints()
-        r.hover:Hide()
-        r.badge = Lab.Badge(r, 58, 18)
-        r.badge:SetPoint("TOPLEFT", 6, -4)
-        r.text = UI.Text(r, 14, "text")
-        r.text:SetPoint("TOPLEFT", r.badge, "TOPRIGHT", 10, 1)
-        r.text:SetPoint("RIGHT", -6, 0)
-        r.sub = UI.Text(r, 12, "accent")
-        r.sub:SetPoint("TOPLEFT", r.text, "BOTTOMLEFT", 0, -4)
-        r.sub:SetPoint("RIGHT", -6, 0)
-        r:SetScript("OnEnter", function(self)
-            self.hover:Show()
-            if self.id then Lab.ItemTip(self, self.id, self.why) elseif self.why then UI.TipText(self, self.text:GetText(), self.why) end
-        end)
-        r:SetScript("OnLeave", function(self) self.hover:Hide(); GameTooltip:Hide() end)
-        r:SetScript("OnClick", function(self) if self.id then Lab.OpenItem(self.id) elseif self.page then FT.Show(self.page) end end)
-        box.rows[i] = r
-    end
-    function box:Fill()
-        local lines = {}
-        -- the next sell window of your most valuable holding that says SELL
-        local best, bestV, bestQ
-        for _, h in ipairs(D.holdings) do
-            local it = D.items[h.id]
-            if it.verdict == "SELL" and h.where ~= "On the AH" and (not bestV or it.price * h.qty > bestV) then
-                best, bestV, bestQ = h.id, it.price * h.qty, h.qty
-            end
-        end
-        if best then
-            local it = D.items[best]
-            lines[#lines + 1] = { kind = "SELL", id = best, text = string.format(L["%s sells best at %s"], FT.ItemText(best), FT.Hour(it.sell[1])),
-                sub = Until(it.sell[1]), why = string.format(L["You hold %s. Post just before %s: that's when it's priciest."], FT.Num(bestQ), FT.Hour(it.sell[1])) }
-        end
-        local days = math.max(0, math.ceil((RAIDS - time()) / 86400))
-        lines[#lines + 1] = { kind = "HOLD", page = "make", text = L["Raids open Dec 9: hold raid mats"],
-            sub = string.format(L["in %d days · sell Dec 5–8"], days),
-            why = L["Arcane Crystal, Elemental Fire and fire potions climb into the raids. Make gold > Raid prep has the list."] }
-        local wid, wch
-        local watched = {}
-        for _, id in ipairs(D.watch) do watched[id] = true end
-        for id in pairs(FT.db and FT.db.watch or {}) do watched[id] = true end
-        for id in pairs(watched) do
-            local it = D.items[id]
-            if it and (not wch or math.abs(it.ch1) > math.abs(wch)) then wid, wch = id, it.ch1 end
-        end
-        if wid then
-            local it = D.items[wid]
-            lines[#lines + 1] = { kind = it.verdict, id = wid, text = string.format(L["%s %s today"], FT.ItemText(wid), FT.Pct(it.ch1)),
-                sub = L["your watchlist's biggest move"], why = it.reason }
-        end
-        lines[#lines + 1] = { kind = "SELL", page = "market", text = L["Tuesday: the busiest day for herbs"],
-            sub = L["post Monday night"], why = L["Most of your herbs sell most on Tuesday, when the raids reset."] }
-        for i, r in ipairs(self.rows) do
-            local m = lines[i]
-            r:SetShown(m ~= nil)
-            if m then
-                r.id, r.page, r.why = m.id, m.page, m.why
-                r.badge:Set(m.kind)
-                UI.FitSize(r.text, m.text, 14, 3)
-                r.sub:SetText(m.sub or "")
-            end
-        end
     end
     return box
 end
@@ -295,8 +199,9 @@ function P.Build(p)
     local bottom = CreateFrame("Frame", nil, p)
     bottom:SetPoint("TOPLEFT", top, "BOTTOMLEFT", 0, -GAP)
     bottom:SetPoint("BOTTOMRIGHT", -PAD, PAD)
-    P.movers, P.coming, P.bags = Movers(bottom), ComingUp(bottom), Bags(bottom)
-    Thirds(bottom, { P.movers, P.coming, P.bags })
+    -- in your bags, going down, going up
+    P.bags, P.down, P.up = Bags(bottom), Movers(bottom, "down"), Movers(bottom, "up")
+    Thirds(bottom, { P.bags, P.down, P.up })
 end
 
 function P.Show()
@@ -306,9 +211,9 @@ function P.Show()
     P.since:SetText(FT.SignedMoney(D.since, "gold") .. " " .. L["since yesterday"])
     P.spark:SetValues(D.worthLine, "up")
     for i, c in ipairs(P.cards) do c:Set(D.top[i]) end
-    P.movers:Fill()
-    P.coming:Fill()
     P.bags:Fill()
+    P.down:Fill()
+    P.up:Fill()
 end
 
 function P.Dirty()

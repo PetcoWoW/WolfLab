@@ -194,6 +194,9 @@ local function Texts(key, id)
     end
 end
 
+-- the sections that are lists: every line one size
+local LIST_SECTION = { farm = true, crafts = true, make = true }
+
 local function BuildFolds(parent)
     local box = UI.Panel(parent, "bg1", "line")
     box.secs = {}
@@ -229,14 +232,31 @@ local function BuildFolds(parent)
             if key then
                 local sum, more, btn = Texts(key, state.id)
                 f.title:SetText(TITLE[key])
-                UI.FitSize(f.sum, sum or "", 14, 3)
-                -- as many extra lines as its share of the height holds
+                -- one size per section: a list (spots, crafts, materials) has every line the same size; anything that
+                -- has to shrink to fit shrinks the whole section by the same step, never one line on its own
+                local list = LIST_SECTION[key]
+                local sumSize, moreSize = list and 13 or 14, list and 13 or 12
                 local room = math.max(0, math.floor((each - UI.RowH(48)) / UI.RowH(17)))
+                local shown = {}
                 for k, t in ipairs(f.more) do
                     local line = (k <= room) and more and more[k] or nil
                     t:SetShown(line ~= nil)
-                    if line then UI.FitSize(t, line, 12, 2) end
+                    if line then t:SetText(line); shown[#shown + 1] = t end
                 end
+                f.sum:SetText(sum or "")
+                UI.SetTextColor(f.sum, "text")
+                local step = 0
+                for k = 0, 3 do
+                    step = k
+                    f.sum:SetFont(UI.FONT, UI.Size(sumSize) - k, "")
+                    local fits = (f.sum:GetStringWidth() or 0) <= (f.sum:GetWidth() or 0) + 0.5
+                    for _, t in ipairs(shown) do
+                        t:SetFont(UI.FONT, UI.Size(moreSize) - k, "")
+                        if (t:GetStringWidth() or 0) > (t:GetWidth() or 0) + 0.5 then fits = false end
+                    end
+                    if fits then break end
+                end
+                f.step = step
                 f.btn:SetShown(btn ~= nil)
                 if btn then f.btn:SetLabel(btn[1]); f.btn.fn = btn[2]; f.btn:FitText(20) end
                 f.line:SetShown(i < n)

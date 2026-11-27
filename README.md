@@ -10,8 +10,8 @@ Click through the new screens in game before they ship in Wolf.
 
 ## What's in it
 
-- **Today:** what you own is worth; Your top 3; under it on the same three columns Movers (up / down, scrolls),
-  Coming up and In your bags.
+- **Today:** what you own is worth; Your top 3; under it on the same three columns In your bags, Going down today and
+  Going up today (each scrolls).
 - **Sample session panel:** fold it to one line (gold and gold an hour) or unfold it for the items.
 - **Minimap button** (a placeholder wolf): click opens the Lab, right-click starts or stops the sample session.
 - **Market:** the list on the left; an item's page with the verdict first, the chart (7D / 30D / 90D), and beside it

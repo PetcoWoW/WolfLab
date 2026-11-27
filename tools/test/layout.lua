@@ -74,6 +74,8 @@ M.SetWidth = function(self, w) self.__w = w; self.__wSet = true end
 M.SetHeight = function(self, h) self.__h = h; self.__hSet = true end
 M.SetSize = function(self, w, h) self.__w, self.__h = w, h or w; self.__wSet, self.__hSet = true, true end
 M.SetFont = function(self, _, size) self.__fsize = size; return true end
+-- the size set, not a fixed 12 (the Lab's test checks that a section's lines share one size)
+M.GetFont = function(self) return "Fonts\\FRIZQT__.TTF", self.__fsize or 12, "" end
 M.SetFontObject = function(self) end
 M.SetJustifyH = function(self, j) self.__justify = j end
 M.SetWordWrap = function(self, v) self.__wrap = v and true or false end
