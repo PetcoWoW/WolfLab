@@ -90,7 +90,12 @@ D.holdings = {
 D.watch = { 13444, 13457, 13510, 13926 }
 D.gold = 1240 * G -- coins on the characters
 D.worthLine = { 4040, 4055, 4050, 4080, 4075, 4100, 4098, 4120, 4118, 4140, 4150, 4148, 4170, 4210 } -- 14 days, gold
-D.since = 86 * G
+
+-- what you own was worth at each of the last 24 price updates (the API's hourly prices and your scans): how much
+-- each one moved it, in gold, oldest first. The newest is the update that's on screen now.
+D.updateMoves = { 3, -2, 5, 1, -6, 4, 8, -3, 2, 6, -1, 4, -5, 7, 3, 9, -2, 4, 6, -4, 5, 2, -3, 12 }
+D.updateEvery = 60 -- minutes between them
+D.lastUpdateAgo = 20 -- minutes since the newest
 
 D.characters = {
     { name = "Raja", class = "Rogue", level = 60, gold = 812 * G, seen = "now", profs = "Mining 300, Herbalism 290" },

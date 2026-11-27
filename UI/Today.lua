@@ -168,16 +168,33 @@ function P.Build(p)
     label:SetText(L["Everything you own"])
     P.worth = UI.Text(own, 24, "text")
     P.worth:SetPoint("LEFT", label, "RIGHT", 18, 0)
-    P.since = UI.Text(own, 14, "up")
-    P.since:SetPoint("LEFT", P.worth, "RIGHT", 16, -1)
+    -- how much the last price update moved it, and since yesterday
+    P.update = UI.Text(own, 14, "up")
+    P.update:SetPoint("BOTTOMLEFT", P.worth, "RIGHT", 16, 1)
+    P.since = UI.Text(own, 12, "muted")
+    P.since:SetPoint("TOPLEFT", P.worth, "RIGHT", 16, -2)
     local days = UI.Text(own, 11, "dim", "RIGHT")
     days:SetPoint("RIGHT", -16, 0)
-    days:SetText(L["14 days"])
-    P.spark = UI.Sparkline(own, 300, 34)
+    days:SetText(L["last 24 updates"])
+    P.spark = UI.Sparkline(own, 280, 34)
     P.spark:SetPoint("RIGHT", days, "LEFT", -12, 0)
     own:EnableMouse(true)
     own:SetScript("OnEnter", function(self)
-        UI.TipText(self, L["Everything you own"], L["Bags, bank, mail, the auction house and every character, at today's prices, plus your gold. Click: where it all is (You)."])
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine(L["Everything you own"], 1, 1, 1)
+        GameTooltip:AddLine(L["Bags, bank, mail, the auction house and every character, at the latest prices, plus your gold."], 0.75, 0.75, 0.75, true)
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine(L["What each price update did to it"], 1, 0.82, 0)
+        local pts = P.points or {}
+        for i = #pts, math.max(2, #pts - 5), -1 do
+            local p0, p1 = pts[i - 1], pts[i]
+            local d = p1.v - p0.v
+            GameTooltip:AddDoubleLine(FT.TimeOfDay(p1.t) .. FT.C("dim", "   " .. FT.Money(p1.v, "gold")),
+                (d >= 0 and FT.C("up", FT.SignedMoney(d, "gold")) or FT.C("down", FT.Money(d, "gold"))), 0.85, 0.85, 0.85, 1, 1, 1)
+        end
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine(L["Click: where it all is (You)."], 0.58, 0.55, 0.5)
+        GameTooltip:Show()
     end)
     own:SetScript("OnLeave", function() GameTooltip:Hide() end)
     own:SetScript("OnMouseUp", function() FT.Show("you") end)
@@ -208,8 +225,25 @@ function P.Show()
     local worth = D.gold
     for _, h in ipairs(D.holdings) do worth = worth + D.items[h.id].price * h.qty end
     P.worth:SetText(Lab.Gold(worth))
-    P.since:SetText(FT.SignedMoney(D.since, "gold") .. " " .. L["since yesterday"])
-    P.spark:SetValues(D.worthLine, "up")
+    -- the worth at each of the last 24 updates, back from now
+    local pts, v = {}, worth
+    local t = time() - D.lastUpdateAgo * 60
+    for i = #D.updateMoves, 1, -1 do
+        pts[i + 1] = { t = t, v = v }
+        v = v - D.updateMoves[i] * 10000
+        t = t - D.updateEvery * 60
+    end
+    pts[1] = { t = t, v = v }
+    P.points = pts
+    local last = D.updateMoves[#D.updateMoves] * 10000
+    P.update:SetText((last >= 0 and FT.C("up", FT.SignedMoney(last, "gold")) or FT.C("down", FT.Money(last, "gold"))) ..
+        FT.C("muted", " " .. string.format(L["with the last prices (%s)"], FT.TimeOfDay(pts[#pts].t))))
+    -- since yesterday: the same 24 hourly updates added up, so the two numbers always agree
+    local day = pts[#pts].v - pts[1].v
+    P.since:SetText((day >= 0 and FT.SignedMoney(day, "gold") or FT.Money(day, "gold")) .. " " .. L["since yesterday"])
+    local vals = {}
+    for i, pt in ipairs(pts) do vals[i] = pt.v end
+    P.spark:SetValues(vals, "up")
     for i, c in ipairs(P.cards) do c:Set(D.top[i]) end
     P.bags:Fill()
     P.down:Fill()
