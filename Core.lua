@@ -206,6 +206,7 @@ FT.On("ADDON_LOADED", function(name)
     end
     db.frame = type(db.frame) == "table" and db.frame or {}
     db.watch = type(db.watch) == "table" and db.watch or {}
+    db.ui = type(db.ui) == "table" and db.ui or {}
     FT.db, FT.S = db, db.settings
     FT.Fire("FT_DB_READY")
 end)

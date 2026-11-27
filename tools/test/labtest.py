@@ -111,6 +111,23 @@ for _, key in ipairs({ "today", "market", "make", "you" }) do
   step("meme page " .. key, function() FT.Show(key) end)
   check("meme " .. key, WolfLabFrame)
 end
+-- the sample session: open, folded, unfolded, from Today's button and the minimap's right-click
+step("session start", function() FT.Show("today"); FT.Pages.today.last.start.onClick() end)
+mock.run(65)
+check("session", WolfLabSession)
+step("session fold", function() WolfLabSession.fold.onClick() end)
+mock.run(1.5)
+check("session folded", WolfLabSession)
+if WolfLabSession.body:IsShown() then mock.err("session", "folded but the items still show") end
+step("session unfold", function() WolfLabSession.fold.onClick() end)
+mock.run(1.5)
+if not WolfLabSession.body:IsShown() then mock.err("session", "unfolded but the items are hidden") end
+check("today, session running", WolfLabFrame)
+step("minimap stop", function() WolfLabMinimapButton:GetScript("OnClick")(WolfLabMinimapButton, "RightButton") end)
+if FT.Session.Running() then mock.err("minimap", "right-click didn't stop the session") end
+step("minimap open", function() WolfLabFrame:Hide(); WolfLabMinimapButton:GetScript("OnClick")(WolfLabMinimapButton, "LeftButton") end)
+if not WolfLabFrame:IsShown() then mock.err("minimap", "click didn't open the window") end
+step("minimap tip", function() WolfLabMinimapButton:GetScript("OnEnter")(WolfLabMinimapButton) end)
 step("reset", function() SlashCmdList["WOLFLAB"]("reset") end)
 step("toggle", function() SlashCmdList["WOLFLAB"]("") end)
 step("logout", function() mock.fire("PLAYER_LOGOUT") end)

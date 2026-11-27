@@ -4,13 +4,16 @@ A preview of [Wolf](https://github.com/PetcoWoW/ForeverTrading)'s next look, for
 Click through the new screens in game before they ship in Wolf.
 
 - **Install:** WowUp → Get Addons → Install from URL → `https://github.com/PetcoWoW/WolfLab`
-- **Open:** `/wolflab` (`/wolflab reset` puts the window back in the middle)
+- **Open:** the minimap button or `/wolflab` (`/wolflab reset` puts the window back in the middle)
 - **Safe next to Wolf:** its own folder, saved data (`WolfLabDB`) and frame names. It reads nothing from the auction
   house, your bags, mail or other addons, and sends nothing. Delete it any time.
 
 ## What's in it
 
-- **Today:** what you own is worth, Your top 3, what's going up and down today.
+- **Today:** what you own is worth, Your top 3, what's going up and down today, Coming up (your next sell window,
+  the raids, your watchlist's biggest move) and Last session with Start a session.
+- **Sample session panel:** fold it to one line (gold and gold an hour) or unfold it for the items.
+- **Minimap button** (a placeholder wolf): click opens the Lab, right-click starts or stops the sample session.
 - **Market:** the list on the left; an item's page with the verdict first, the chart (7D / 30D / 90D), and five
   folds that show their answer while closed. Watch, Wowhead, Share.
 - **When it sells:** when to sell, when to buy, the busiest day, one hour-by-hour strip; the charts on request.
