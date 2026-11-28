@@ -1,4 +1,4 @@
--- Wolf Lab: the window. Wolf's classic frame (the game's dialog edge, title banner, round portrait, red X, the
+-- Wolf Lab: the window. Wolf's classic frame (the game's dialog edge, round coin portrait, red X, the
 -- game's tabs on the header line), four pages (Today, Market, Make gold, You) and Settings behind the gear.
 local ADDON, FT = ...
 local UI, L = FT.UI, FT.L
@@ -238,7 +238,7 @@ local function Build()
     win:SetScale(FT.S.scale or 1)
     Place()
     UI.Skin(win, "window", "bg0")
-    win.banner = UI.TitleBanner(win, L["Wolf Lab"])
+    -- (v0.7: no title banner over the top edge - the header has the coin logo, and drags the window)
     table.insert(UISpecialFrames, "WolfLabFrame")
 
     -- header: portrait, the name, the four tabs; the price light, Settings and the X on the right
