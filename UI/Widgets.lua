@@ -372,7 +372,7 @@ function UI.Confirm(opts)
             d.accent:SetPoint("TOPRIGHT", -1, -1)
         end
         d.logo = UI.Icon(d, 22)
-        d.logo:SetIcon("Interface\\AddOns\\WolfLab\\media\\logo")
+        d.logo:SetIcon(FT.LOGO)
         d.logo:SetPoint("TOPLEFT", 18, -18)
         d.title = UI.Text(d, 14, "text")
         d.title:SetPoint("LEFT", d.logo, "RIGHT", 10, 0)

@@ -1,9 +1,9 @@
--- Wolf Lab: a minimap button (a placeholder wolf, so it isn't mistaken for Wolf's own). Click: the window.
+-- Wolf Lab: a minimap button with Wolf's black wolf (placed away from Wolf's own). Click: the window.
 -- Right-click: start or stop a sample session. Drag: move it around the minimap.
 local ADDON, FT = ...
 local UI, L = FT.UI, FT.L
 
-local ICON = "Interface\\Icons\\Ability_Hunter_Pet_Wolf"
+local ICON = FT.LOGO
 local mb
 
 local function Place()

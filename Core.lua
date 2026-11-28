@@ -10,6 +10,8 @@ FT.L = L
 local GetMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 FT.VERSION = (GetMeta and GetMeta(ADDON, "Version")) or "dev"
 FT.MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\media\\"
+-- Wolf's logo: the game's own black wolf icon (nothing to ship)
+FT.LOGO = "Interface\\Icons\\Ability_Mount_BlackDireWolf"
 
 ---------------------------------------------------------------------------
 -- Events: game events and our own ("FT_*") share one dispatcher
